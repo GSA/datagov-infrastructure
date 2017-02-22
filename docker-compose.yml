@@ -1,0 +1,14 @@
+version: '3'
+services:
+  jenkins:
+    build: .
+      context: docker/jenkins/
+    environment:
+      JAVA_OPTS: "-Djava.awt.headless=true"
+    ports:
+      - "50000:50000"
+      - "8080:8080"
+    volumes:
+      - /usr/local/bin/docker:/bin/docker
+      - /var/run/docker.sock:/var/run/docker.sock
+      - jenkins_home:/var/jenkins_home jenkins

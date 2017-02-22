@@ -1,0 +1,3 @@
+docker-plugin:latest
+ssh-slaves:latest
+durable-task:latest
