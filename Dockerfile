@@ -1,6 +1,9 @@
 FROM jenkins
-COPY docker/executors.groovy /usr/share/jenkins/ref/init.groovy.d/executors.groovy
-COPY docker/plugins.txt /usr/share/jenkins/plugins.txt
+
+COPY jenkins/executors.groovy /usr/share/jenkins/ref/init.groovy.d/executors.groovy
+COPY jenkins/seed.groovy /usr/share/jenkins/ref/init.groovy.d/seed.groovy
+
+COPY jenkins/plugins.txt /usr/share/jenkins/plugins.txt
 RUN /usr/local/bin/plugins.sh /usr/share/jenkins/plugins.txt
 
 COPY jenkins/pipeline/ /usr/share/jenkins/ref/init.groovy.d/

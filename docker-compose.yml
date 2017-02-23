@@ -1,8 +1,22 @@
-version: '3'
+version: '2'
 services:
   jenkins:
     build: .
-      context: docker/jenkins/
+      ################################################################################################################
+      # This is a sample of the environmental variables and persistant volumes should be copyed to a new file: docker-compose.secret.yml.
+      # Users should confirm their copied file are both included in .gitignore(ed) and stored on your machine using a GPG key with AES256/512 bit encryption
+      # and decrypted at run time this project is STRICTLY as a Development Environment or Personal Deployment method users secured personal/work computer. Variables
+      # or could be added to public repository if encyption is used with standards mentioned above this comment.
+      # It is not ideal nor recommended to provide a container the Environment Variables of a networked/micro-service application
+      # A solution created for the distributed management of secret management key/value stores with auth or/and vaults should be used over GPG in a distributed/production setting...
+      # only solve getting their production environments should use a dedicated service for the authorization/authentication of the environment.
+      ##################################################################################################################
+      args:
+        key: #AWS
+        pair: #AWS
+        jenkinsUser:
+        jenkinsPassword: secret
+
     environment:
       JAVA_OPTS: "-Djava.awt.headless=true"
     ports:
@@ -11,4 +25,4 @@ services:
     volumes:
       - /usr/local/bin/docker:/bin/docker
       - /var/run/docker.sock:/var/run/docker.sock
-      - jenkins_home:/var/jenkins_home jenkins
+      #- jenkins_home:/var/jenkins_home jenkins:rw
