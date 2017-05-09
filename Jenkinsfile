@@ -1,164 +1,152 @@
-#!groovy
+// ============================================================================
+// Assumes the script referenced in env.PIPELINE_SCRIPT
+// has functions named
+//   1. provision(environment) - that provisions the environment
+//   2. test() - that tests the provisioined servers, not used yet
+//   3. other, e.g. setUp/initialize (at start of pipeline) and
+//      tearDown/finalize (at end of pipeline) once implemented
+// This script will invoke those scripts in the order given above
 
-// This is the full syntax for Jenkins Declarative Pipelines as of version 0.8.1.
+// Logic is to be added to select the correct pipeline script based
+// on phrases inthe name of the job name (env.JOB_NAME)
+// ============================================================================
 
-pipeline {
-  // Possible agent configurations - you must have one and only one at the top level.
-  agent any
-  agent none
-  agent {
-    label "whatever"
-  }
-  agent {
-    docker "ubuntu:16.04"
-  }
-  agent {
-    dockerfile true
-  }
-  agent {
-    docker {
-      image "ubuntu:16.04"
-      label "docker-nodes"
-      args "-v /tmp:/tmp"
-    }
-  }
-  agent {
-    dockerfile {
-      filename "someOtherDockerfile"
-      label "docker-nodes"
-      args "-v /tmp:/tmp"
-    }
-  }
+env.AWS_REGION = "us-east-2"
+env.PIPELINE_SCRIPT = getPipelineScript("full")
 
-  // Environment
-  environment {
-    FOO = "bar"
-    OTHER = "${FOO}baz"
-    SOME_CREDENTIALS = credentials('some-id')
-  }
-
-  // Tools - only works when *not* on docker or dockerfile agent
-  tools {
-    // Symbol for tool type and then name of configured tool installation
-    maven "maven3.3.9"
-    jdk "jdk8"
-  }
-
-  options {
-    // General Jenkins job properties
-    buildDiscarder(logRotator(numToKeepStr:'1'))
-    // Declarative-specific options
-    skipDefaultCheckout()
-    // "wrapper" steps that should wrap the entire build execution
-    timestamps()
-    timeout(time: 5, unit: 'MINUTES')
-  }
-
-  triggers {
-    cron('@daily')
-  }
-
-  // Access parameters with 'params.PARAM_NAME' - that'll get you default values too.
-  parameters {
-    booleanParam(defaultValue: true, description: '', name: 'flag')
-    // Newer core versions support "stringParam" as well
-    string(defaultValue: '', description: '', name: 'SOME_STRING')
-  }
-
-  stages {
-    stage("first stage") {
-      // All sections within stage other than steps are optional.
-      environment {
-        // Overrides or adds to the existing environment
-        FOO = "notBar"
-      }
-      tools {
-        // Overrides tools of the same type defined globally
-        maven "maven3.3.3"
-      }
-      agent {
-        // Overrides the top-level agent. "agent none" at the stage level does nothing.
-        label "some-other-label"
-      }
-
-      // Conditional execution of this stage - only run this stage if the when condition is true.
-      when {
-        // One and only one condition is allowed.
-
-        // Only run if the branch matches this Ant-style pattern
-        branch "master"
-
-        // Only run if the environment contains this given variable name with this given value
-        environment name: "FOO", value: "notBar"
-
-        // Only run if this Scripted Pipeline expression doesn't return false or null
-        expression {
-          echo "You can run any Pipeline steps in here"
-          return "foo" == "bar"
+stage('Initialize') {
+    node("master") {
+        checkout scm
+        withCredentials([[$class: 'UsernamePasswordMultiBinding',
+        	credentialsId: 'ansible-secret-dev',
+        	usernameVariable: 'UN',
+        	passwordVariable: 'PASSWORD']])
+        {
+            sh """
+            	rm -rf ~/ansible-secret.txt && echo '${env.PASSWORD}' >> \
+            	~/ansible-secret.txt
+            """
         }
-      }
-
-      // Runs at the end of the stage, depending on whether the conditions are met.
-      post {
-        // always means, well, always run.
-        always {
-          echo "Hi there"
-        }
-        // changed means when the build status is different than the previous build's status.
-        changed {
-          echo "I'm different"
-        }
-        // success, failure, unstable all run if the current build status is successful, failed, or unstable, respectively
-        success {
-          echo "I succeeded"
-          archive "**/*"
-        }
-      }
-
-      // steps is required and is where you put your stage's actual work
-      steps {
-        echo "I'm doing things, I guess."
-        retry(5) {
-          echo "Keep trying this if it fails up to 5 times"
-        }
-
-        // the script block allows you to run any arbitrary Pipeline script, even if it doesn't fit the Declarative subset.
-        script {
-          if ("sky" == "blue") {
-            echo "You can't actually do loops or if statements etc in Declarative unless you're in a script block!"
-          }
-        }
-      }
+        //sh "touch ~/ansible-secret.txt"
     }
+}
 
-    stage("second stage") {
-      steps {
-        // You can only use the parallel step if it's the *only* step in the stage.
-        parallel(
-          firstBlock: {
-            echo "I'm on one parallel block"
-          },
-          secondBlock: {
-            echo "I'm on the other block"
-          }
-        )
-      }
-    }
-  }
+runPipeline(env.PIPELINE_SCRIPT)
 
-  post {
-    // always means, well, always run.
-    always {
-      echo "Hi there"
+
+def runPipeline(pipeline) {
+    runStages(pipeline, "dev")
+    runStages(pipeline, "prod")
+}
+
+
+def runStages(pipeline, environment) {
+	def isDev = isDev(environment)
+    if (isDev || isMaster()) {
+        //initialize(environment)
+        if (!isDev) {
+        	proceed(pipeline, environment)
+        }
+        provision(pipeline, environment)
+        test(pipeline, environment)
+        // do other stages here
+    } else {
+    	echo "Skipping ${environment}, because feature branch (${env.BRANCH_NAME})"
     }
-    // changed means when the build status is different than the previous build's status.
-    changed {
-      echo "I'm different"
+}
+
+def proceed(pipeline, environment) {
+	def label = getLabel(environment)
+    stage("${pipeline}-${label}: Proceed?") {
+    	node('master') {
+			timeout(time:5, unit:'DAYS') {
+              	input "Do you want to continue to ${label}?"
+            }
+         }
     }
-    // success, failure, unstable all run if the current build status is successful, failed, or unstable, respectively
-    success {
-      echo "I succeeded"
-      archive "**/*"
+}
+
+def provision(pipeline, environment) {
+    stage("${pipeline}-${getLabel(environment)}: Provision") {
+        node('master') {
+            getPipeline(pipeline).provision(nameEnvironment(environment))
+        }
     }
-  }
+}
+
+def test(pipeline, environment) {
+    stage("${pipeline}-${getLabel(environment)}: Test") {
+        node('master') {
+            def reportsDirectory = "test-reports"
+            def hasTests = getPipeline(pipeline).test(nameEnvironment(environment),
+                "${pwd()}/${reportsDirectory}")
+            if (hasTests) {
+	            step([$class: 'JUnitResultArchiver',
+    	            testResults: "**/${reportsDirectory}/TEST-*.xml"])
+	        }
+        }
+    }
+}
+
+def nameEnvironment(environment) {
+	if (isDev(environment) && !isMaster()) {
+		environment = "${environment}-${env.BRANCH_NAME}"
+	}
+    return environment
+}
+
+def getLabel(environment) {
+    return environment.toUpperCase()
+}
+
+def getPipelineScript(defaultScript) {
+	def selectors = getPipelineSelectors()
+	def name = getPipelineName().toLowerCase()
+	def script = defaultScript
+	echo "Select pipeline (default: ${env.PIPELINE_SCRIPT})"
+	for (s in selectors) {
+		// Using ~ causes Jenkins to fail, citing that
+		// the bitwise negate operator is not allowed
+		// Therefore using the Pattern object explicitly
+		echo "Checking ${name} against ${s.selector}"
+		if (name ==~ s.selector) {
+			echo "Selecting pipeline ${s.pipeline}"
+			script = s.pipeline
+			// NOTE that script could be change to return a list
+			// of all matching pattern and then run all those pipelines
+			// per environment
+			break
+		}
+	}
+	echo "Selected Pipeline=${script}"
+	return script
+}
+
+def getPipelineName() {
+	def names = env.JOB_NAME.split("/")
+	def name = names[0]
+	echo "JOB_NAME=${env.JOB_NAME}"
+	echo" Pipeline Name=${name}"
+	return name
+}
+
+def getPipelineSelectors() {
+	def selectors = []
+	selectors << [selector:/.*d2d.*/,             pipeline: "d2d" ]
+	selectors << [selector:/.*shared.*infra.*/,  pipeline: "shared-infrastructure" ]
+	selectors << [selector:/.*datagov.*pilot.*/,  pipeline: "datagov-pilot" ]
+	return selectors
+}
+
+def getPipeline(name) {
+   def pipeline = load "${pwd()}/jenkins/pipeline/${name}.groovy"
+   return pipeline
+}
+
+def isMaster() {
+    return (env.BRANCH_NAME.startsWith("master"))
+}
+
+def isDev(environment) {
+    return  (environment == "dev")
 }
