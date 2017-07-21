@@ -1,19 +1,28 @@
 version: '2'
 services:
-  jenkins-master:
-    build: .
-    environment:
-      JAVA_OPTS: "-Djava.awt.headless=true"
-      awsKey: #AWS
-      awsSecret: #AWS
-      jenkinsUser: ${USERNAME}
-      jenkinsPassword: secret      
+  data:
+    build: docker/jenkins-data
+  master:
+    build: docker/jenkins-master
+    volumes_from:
+      - data
+    volumes:
+      - ./jenkinslocation.txt:/myfiles/jenkinslocation.txt
     ports:
       - "50000:50000"
-      - "8080:8080"
+  nginx:
+    build: docker/jenkins-nginx
+    ports:
+      - "80:80"
+    links:
+      - master:jenkins-master
+  slave:
+    build: docker/jenkins-slave
+  proxy:
+    build: docker/jenkins-proxy
+    command: -i
+    ports:
+      - "3375:2375"
     volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /usr/local/bin/docker:/bin/docker
-      - /var/run/docker.sock:/var/run/docker.sock
-      #- jenkins_home:/var/jenkins_home jenkins-master:rw
-  
+      - /var/run/docker.sock:/var/run/docker.sock 
+
