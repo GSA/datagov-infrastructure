@@ -16,6 +16,8 @@ for example:
 * Production VPC [vpc-prod](/vpc-prod)
 * Management VPC [vpc-mgmt](/vpc-mgmt)
 
+![alt text](VPC-architecture-overview.png "VPC Architecture Overview")
+
 ### CIDR-Formatted IP Address Ranges
 
 Because a VPC is an isolated world meant specially for your use, you can define a range of private IP addresses that the VPC will allow. For example, we may wish to allow any IP address from 10.0.50.0 to 10.0.50.15.
@@ -52,7 +54,9 @@ For example:
 * Private Subnet [subnet-private](/subnet-private)
     * Used for Applications
 * Database Subnet [subnet-data](/subnet-data)
-    * Used for Databases and Search Indexes 
+    * Used for Databases and Search Indexes
+
+![alt text](Subnet-architecture-overview.png "Subnet Architecture Overview")
 
 ### Route Tables
 
@@ -86,3 +90,5 @@ By default, when an EC2 Instance makes an AWS API call, that HTTPS request is st
 AWS customers complained that they didn't want their AWS API requests traveling outside the VPC, so AWS released a [VPC Endpoint](http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/vpc-endpoints.html) service.
 
 VPC Endpoints cost nothing and provide a new destination for a Route Table so that when certain AWS API requests are made instead of being routed to the public AWS API endpoint, they are routed directly within the VPC.
+
+![alt text](VPC-dataflow-overview.png "Architecture Overview")
