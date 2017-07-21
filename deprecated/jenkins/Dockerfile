@@ -1,4 +1,4 @@
-FROM jenkins
+FROM jenkins:latest
 
 COPY jenkins/executors.groovy /usr/share/jenkins/ref/init.groovy.d/executors.groovy
 COPY jenkins/seed.groovy /usr/share/jenkins/ref/init.groovy.d/seed.groovy
