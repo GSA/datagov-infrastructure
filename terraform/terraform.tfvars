@@ -26,14 +26,15 @@ name = "datagov-infrastructure"
 aws_region_1 = "us-east-1"
 aws_region_2 = "us-west-1"
 
-instance_type_small = "t2.medium"
-instance_type_compute_xlarge = "c4.xlarge"
-instance_type_compute_2xlarge = "c4.2xlarge"
-instance_type_memory_xlarge = "m4.xlarge"
-instance_type_memory_2xlarge = "m4.2xlarge"
+instance_type = "t2.medium"
 
-min_size = 1
-max_size = 2
+#instance_type_compute_medium = "c4.xlarge"
+#instance_type_compute_large = "c4.2xlarge"
+#instance_type_memory_medium = "m4.xlarge"
+#instance_type_memory_large = "m4.2xlarge"
+
+instance_min_size = 1
+instance_max_size = 2
 
 jenkins_server_port = 8080
 elb_port    = 443
