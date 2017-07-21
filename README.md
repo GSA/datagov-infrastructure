@@ -2,9 +2,7 @@
 
 <img src="https://img.shields.io/badge/Project%20Phase-Alpha-red.svg" />
 
-Data.gov Infrastructure as Code
-
-This repo contains the Work in Progress (WIP) Ansible Deployment of Jenkins (TBD docker-compose) for Infrastructure as Code using Terraform, (TDB compatiable Cloudformation Jenkins pipeline). Using Jenkins, Terraform, Packer to deploy [Data.gov's Production Deployment](https://github.com/gsa/catalog-deploy).
+This repo contains the Work in Progress (WIP) for Data.gov's Infrastructure as Code using Terraform. Using Jenkins, Terraform, Packer to deploy [Data.gov's Production Deployment](https://github.com/gsa/catalog-deploy).
 
 ## Contributing
 We're so glad you're thinking about contributing to Data.gov!
