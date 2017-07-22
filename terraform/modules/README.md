@@ -18,7 +18,17 @@ for example:
 
 ![alt text](VPC-architecture-overview.png "VPC Architecture Overview")
 
-### CIDR-Formatted IP Address Ranges
+#### What is the `Management VPC` used for?
+
+The management VPC is intended for control systems such as CI/CD servers, bastions/jumpboxes, monitoring/logging services, build agents, private git repositories, or whatever else is needed to manage the environment as a whole. Via VPC peering or a VPN connection, the management VPC can route traffic to/from all subnets within dev/stage/prod VPCs.
+
+Administrators and developers use the Management VPC as the gateway to their environment. **Ingress access to the Management VPC should be via whitelisted IP addresses**. This usually means the static addresses of the corporate office(s) and/or a VPN connection for remote workers. Some SaaS products or services may need to access this network as well, and the addresses of those services should also be whitelisted (*if possible*). 
+
+>In the event that a service cannot be whitelisted (no static IP or VPN connection is available), access from 0.0.0.0/0 can be allowed through the public subnet of the VPCs assuming the following conditions are met: API based access uses an API token or one-way connection via TCP protocols (when a response back isn't required like for logging/metrics), traffic is encypted via a TLS/SSL based connection. For humans requiring access, a web proxy with 2FA authentication and demonstrated least privledge for that service (though this approach should be avoid if at all possible).
+
+The non-prod and production VPCs are identical excepting the address space. This is where applications reside and function. Ideally, administrators never access a shell on these networks at all. The systems and databases in these networks should be as automated as possible via configuration management. In reality, there will almost certainly be a need to access them for troubleshooting, and in such cases access is done through a bastion or jumpbox from within the management VPC only. There is no direct inbound access from the Internet except to ELBs and any other public-facing web servers in the public subnets.
+
+### What are `CIDR-Formatted IP Address Ranges`?
 
 Because a VPC is an isolated world meant specially for your use, you can define a range of private IP addresses that the VPC will allow. For example, we may wish to allow any IP address from 10.0.50.0 to 10.0.50.15.
 
@@ -41,7 +51,7 @@ Sometimes CIDR Ranges are called CIDR Blocks. The CIDR Block `0.0.0.0/0` corresp
 You'll notice that every VPC requires its own CIDR Block and this represents the range of private IP addresses
 which can be assigned to resources within that VPC.
 
-### Subnets
+### What are `Subnets`?
 
 Subnets are "sub-networks", or a partition of the VPC. For example, a VPC might have the CIDR range `10.0.50.0/24` (`10.0.15.0` - `10.0.15.255`) and a subnet might allow just IP addresses in the range `10.0.50.0/28` (`10.0.15.0` - `10.0.15.16`). Note that subnets cannot have overlapping CIDR Ranges with other subnets.
 
@@ -58,17 +68,17 @@ For example:
 
 ![alt text](Subnet-architecture-overview.png "Subnet Architecture Overview")
 
-### Route Tables
+### What are `Route Tables`?
 
 Each subnet needs a [Route Table](http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Route_Tables.html) so that
 it knows how to route traffic within that subnet. For example, a given subnet might route traffic destined for CIDR Block `10.0.20.0/24` to a VPC Peering Connection or VPN. Private subnet would use `10.0.10.0/24` only accessible from within the VPC, and the Public subnet (`0.0.0.0/0`) to the Internet Gateway so it can reach via the public Internet. The Route Table declares all this.
 
-### The Internet Gateway
+### What is `The Internet Gateway`?
 
 The best way to think of an [Internet Gateway](http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Internet_Gateway.html)
 is that it's the destination that VPC egress traffic destined for the public Internet gets routed to. It's configuration is recorded in a Route Table.
 
-### NAT Gateways
+### What are `NAT Gateways`?
 
 If you launch an EC2 Instance in one of the **Public Subnets** defined above, it will automatically be addressable from the public Internet and have outbound Internet access itself.
 
@@ -83,7 +93,7 @@ Such an Instance is called a "Network Address Translation" instance, or NAT inst
 But what if the NAT Instance goes down? Now our private EC2 Instance can't reach the Internet at all. That's why it's preferable to have a highly available NAT Instance service, and that's what Amazon's [NAT Gateway](http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/vpc-nat-gateway.html)
 service is. Amazon runs more than one EC2 Instance behind the scenes, and automatically handles failover if one instance dies.
 
-### VPC Endpoints
+### What are `VPC Endpoints`?
 
 By default, when an EC2 Instance makes an AWS API call, that HTTPS request is still routed through the public Internet.
 
