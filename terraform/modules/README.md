@@ -58,8 +58,6 @@ which can be assigned to resources within that VPC.
 
 Subnets are "sub-networks", or a partition of the VPC. For example, a VPC might have the CIDR range `10.0.50.0/24` (`10.0.15.0` - `10.0.15.255`) and a subnet might allow just IP addresses in the range `10.0.50.0/28` (`10.0.15.0` - `10.0.15.16`). Note that subnets cannot have overlapping CIDR Ranges with other subnets.
 
-In addition, each subnet **can** have a unique Route Table.
-
 For example:
 
 * Public Subnet [subnet-public](/subnet-public)
@@ -70,6 +68,8 @@ For example:
     * Used for Databases and Search Indexes
 
 ![alt text](Subnet-architecture-overview.png "Subnet Architecture Overview")
+
+Each subnet requires its own `Route Table`.
 
 ### What are `Route Tables`?
 
