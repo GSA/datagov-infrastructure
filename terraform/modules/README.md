@@ -27,9 +27,9 @@ Administrators and developers use the Management VPC as the gateway to their env
 In the event that a service cannot be whitelisted (no static IP or VPN connection is available), access from 0.0.0.0/0 can be allowed through the public subnet of the VPCs assuming the following conditions are met: 
 * API based access uses an API token or one-way connection via [UDP protocol](https://en.wikipedia.org/wiki/User_Datagram_Protocol) (when a response back isn't required like for logging/metrics data streams)
 * Traffic is encypted via a TLS/SSL based connection. 
-* For human access, a web proxy with 2FA authentication and demonstrated least privledge for that service (though this approach should be avoid if at all possible).
+* For human access, a web proxy with 2FA authentication and demonstrated least privledge for that service (though this approach should be avoided if at all possible).
 
-The non-prod and production VPCs are identical excepting the address space. This is where applications reside and function. Ideally, administrators never access a shell on these networks at all. The systems and databases in these networks should be as automated as possible via configuration management. In reality, there will almost certainly be a need to access them for troubleshooting, and in such cases access is done through a bastion or jumpbox from within the management VPC only. There is no direct inbound access from the Internet except to ELBs and any other public-facing web servers in the public subnets.
+Ideally, administrators never access a shell on these networks at all. The systems and databases in these networks should be as automated as possible via configuration management. In reality, there will almost certainly be a need to access them for troubleshooting, and in such cases access is done through a bastion or jumpbox from within the management VPC only. There is no direct inbound access from the Internet except to ELBs and any other public-facing web servers in the public subnets.
 
 ### What are `CIDR-Formatted IP Address Ranges`?
 
