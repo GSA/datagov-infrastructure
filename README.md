@@ -1,3 +1,6 @@
+_This repo is no longer maintained. Please follow https://github.com/GSA/datagov-deploy for more information about our
+infrastructure plans._
+
 # datagov-infrastructure
 
 <img src="https://img.shields.io/badge/Project%20Phase-Alpha-red.svg" />
